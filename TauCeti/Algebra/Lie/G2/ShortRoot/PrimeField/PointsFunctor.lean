@@ -579,18 +579,9 @@ theorem coe_weightTorusPoints (A : Type v) [CommRing A] [Algebra (ZMod 3) A] (s 
       (σ := Fin 2)).symm s with hqdef
   have hs : SplitTorus.pointsMulEquiv q = s := by
     rw [hqdef, MulEquiv.apply_symm_apply]
-  have hq := pointsMulEquiv_kostantWeightTorusToralBaseChangeCoordinateMap rootGen cartanGen
-    rep lattice.toAddSubgroup rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator
-    latticeBasis weight (ZMod 3) IntegralToralClosure.definingIdeal_def
-    (CommAlgCat.of (ZMod 3) A) q
-  rw [hs] at hq
-  have hcomp := CommHopfAlgCat.mapPointsFunctor_eq_quotientPointsHom_of_mkQuotient_comp _ _ _
-    ((mkQuotient_comp_kostantWeightTorusToralBaseChangePresentationCoordinateMap rootGen
-        cartanGen rep lattice.toAddSubgroup rep_kostantForm_mem_lattice
-        isNilpotent_rep_serreRootGenerator latticeBasis weight (ZMod 3)).trans
-      generator_inr.symm) (CommAlgCat.of (ZMod 3) A) q
-  rw [IntegralToralClosure.coe_weightTorusPoints, ← hq, ← hcomp,
-    ← coe_weightTorusPoints_pointsMulEquiv A q, hs]
+  rw [← hs, coe_weightTorusPoints_pointsMulEquiv, generator_inr,
+    TauCeti.GeneralLinear.pointsMulEquiv_mapPointsFunctor_weightTorusBaseChangeCoordinateMap,
+    IntegralToralClosure.coe_weightTorusPoints, kostantTorusMatrix_apply]
 
 /-- **The pinning equation on matrix-valued points of the carrier**: conjugation by a point `s` of
 the weight torus rescales the parameter of each numbered simple root subgroup by the corresponding

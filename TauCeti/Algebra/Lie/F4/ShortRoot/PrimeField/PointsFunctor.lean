@@ -166,6 +166,20 @@ noncomputable def weightTorusPoints (A : Type v) [CommRing A] [Algebra (ZMod 2) 
     fun _ => TauCeti.GeneralLinear.pointsMulEquiv_mapPointsFunctor_mem_generatedPointsSubgroup
       26 generator (.inr ()) A _
 
+/-- A weight-torus point of the carrier over `𝔽₂` is the image of the corresponding point of the
+split torus under the generating coordinate map. -/
+theorem coe_weightTorusPoints_pointsMulEquiv (A : Type v) [CommRing A] [Algebra (ZMod 2) A]
+    (q : HopfAlgebra.points (R := ZMod 2)
+      (H := (DiagonalizableGroup.coordinateRing (ZMod 2)
+        (SplitTorus.characterGroup (Fin 4))).obj) (CommAlgCat.of (ZMod 2) A)) :
+    (weightTorusPoints A (SplitTorus.pointsMulEquiv q) :
+        _root_.Matrix.GeneralLinearGroup (Fin 26) A) =
+      TauCeti.GeneralLinear.pointsMulEquiv 26
+        ((CommHopfAlgCat.Hom.mapPointsFunctor (generator (.inr ()))).app
+          (CommAlgCat.of (ZMod 2) A) q) := by
+  rw [weightTorusPoints]
+  exact congrArg _ (congrArg _ (MulEquiv.symm_apply_apply _ q))
+
 /-- **A weight-torus point of the carrier over `𝔽₂` is the corresponding point of the integral
 carrier**, as a matrix. -/
 @[simp]
@@ -180,32 +194,9 @@ theorem coe_weightTorusPoints (A : Type v) [CommRing A] [Algebra (ZMod 2) A] (s 
       (σ := Fin 4)).symm s with hqdef
   have hs : SplitTorus.pointsMulEquiv q = s := by
     rw [hqdef, MulEquiv.apply_symm_apply]
-  have hq := pointsMulEquiv_kostantWeightTorusToralBaseChangeCoordinateMap rootGen cartanGen
-    rep lattice.toAddSubgroup rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator
-    latticeBasis f4ShortRootWeight (ZMod 2) _root_.TauCeti.F4ShortRoot.definingIdeal_def
-    (CommAlgCat.of (ZMod 2) A) q
-  rw [hs] at hq
-  have hcomp := CommHopfAlgCat.mapPointsFunctor_eq_quotientPointsHom_of_mkQuotient_comp _ _ _
-    ((mkQuotient_comp_kostantWeightTorusToralBaseChangePresentationCoordinateMap rootGen
-        cartanGen rep lattice.toAddSubgroup rep_kostantForm_mem_lattice
-        isNilpotent_rep_serreRootGenerator latticeBasis f4ShortRootWeight (ZMod 2)).trans
-      generator_inr.symm) (CommAlgCat.of (ZMod 2) A) q
-  rw [_root_.TauCeti.F4ShortRoot.coe_weightTorusPoints, ← hq, ← hcomp]
-  rfl
-
-/-- A weight-torus point of the carrier over `𝔽₂` is the image of the corresponding point of the
-split torus under the generating coordinate map. -/
-theorem coe_weightTorusPoints_pointsMulEquiv (A : Type v) [CommRing A] [Algebra (ZMod 2) A]
-    (q : HopfAlgebra.points (R := ZMod 2)
-      (H := (DiagonalizableGroup.coordinateRing (ZMod 2)
-        (SplitTorus.characterGroup (Fin 4))).obj) (CommAlgCat.of (ZMod 2) A)) :
-    (weightTorusPoints A (SplitTorus.pointsMulEquiv q) :
-        _root_.Matrix.GeneralLinearGroup (Fin 26) A) =
-      TauCeti.GeneralLinear.pointsMulEquiv 26
-        ((CommHopfAlgCat.Hom.mapPointsFunctor (generator (.inr ()))).app
-          (CommAlgCat.of (ZMod 2) A) q) := by
-  rw [weightTorusPoints]
-  exact congrArg _ (congrArg _ (MulEquiv.symm_apply_apply _ q))
+  rw [← hs, coe_weightTorusPoints_pointsMulEquiv, generator_inr,
+    TauCeti.GeneralLinear.pointsMulEquiv_mapPointsFunctor_weightTorusBaseChangeCoordinateMap,
+    _root_.TauCeti.F4ShortRoot.coe_weightTorusPoints, kostantTorusMatrix_apply]
 
 /-- **The pinning equation on matrix-valued points of the carrier over `𝔽₂`**: conjugation by a
 point `s` of the weight torus rescales the parameter of each numbered simple root subgroup by the

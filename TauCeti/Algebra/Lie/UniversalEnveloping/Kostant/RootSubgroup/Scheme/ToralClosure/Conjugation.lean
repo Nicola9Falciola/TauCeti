@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Conjugation
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.HopfIdealPoints.Conjugation
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Equivalence
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Points
 
@@ -84,25 +84,6 @@ section UniversalProperty
 variable (J : HopfIdeal ℤ (GeneralLinear.coordinateHopfAlgebra ℤ n))
 variable (P : Matrix.GeneralLinearGroup (Fin n) ℤ)
 
-/-- If conjugation by `P` carries the matrix of a point `f` of `GLₙ` over `A` into the subgroup cut
-out by `J`, then `f` kills the image of `J` under the coordinate automorphism of conjugation by
-`P`, that is, the preimage of `J` under the inverse automorphism. -/
-private theorem comapOfSurjective_conjCoordinateIso_inv_toIdeal_le_ker (A : Type) [CommRing A]
-    (f : WithConv (GeneralLinear.coordinateHopfAlgebra ℤ n →ₐ[ℤ] A))
-    (hf : Matrix.GeneralLinearGroup.map (algebraMap ℤ A) P * GeneralLinear.pointsMulEquiv n f *
-        (Matrix.GeneralLinearGroup.map (algebraMap ℤ A) P)⁻¹ ∈
-      GeneralLinear.hopfIdealPointsSubgroup n J A) :
-    (J.comapOfSurjective (GeneralLinear.conjCoordinateIso P).inv.hom
-        (ConcreteCategory.bijective_of_isIso (GeneralLinear.conjCoordinateIso P).inv).2).toIdeal ≤
-      RingHom.ker f.ofConv.toRingHom := by
-  rw [← GeneralLinear.pointsMulEquiv_toConv_comp_conjCoordinateIso,
-    GeneralLinear.mem_hopfIdealPointsSubgroup_iff, MulEquiv.symm_apply_apply] at hf
-  intro y hy
-  have hzero := hf _ (HopfIdeal.mem_comapOfSurjective.mp hy)
-  rw [ofConv_toConv, AlgHom.comp_apply, BialgHom.coe_toAlgHom, ← _root_.CommHopfAlgCat.comp_apply,
-    Iso.inv_hom_id, _root_.CommHopfAlgCat.id_apply] at hzero
-  rwa [RingHom.mem_ker, AlgHom.toRingHom_eq_coe, AlgHom.coe_toRingHom]
-
 /-- **Conjugating the generators into a Hopf ideal quotient pulls that ideal into the toral defining
 ideal.** If conjugation by `P` carries every represented root subgroup point and every represented
 weight-torus point into the closed subgroup scheme cut out by `J`, then the image of `J` under the
@@ -131,7 +112,7 @@ theorem comapOfSurjective_conjCoordinateIso_inv_le_kostantToralDefiningIdeal
         kostantRootSubgroupMatrix e h ρ M hM i (hnil i) b q := by
       rw [GeneralLinear.pointsMulEquiv_apply]
       exact pointsMulEquiv_kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b _ q
-    have hker := comapOfSurjective_conjCoordinateIso_inv_toIdeal_le_ker J P _ _
+    have hker := GeneralLinear.comapOfSurjective_conjCoordinateIso_inv_toIdeal_le_ker J P _
       (hmatrix ▸ hroot _ i q)
     rwa [ofConv_toConv, AlgHom.id_comp] at hker
   · -- Evaluate at the generic point of the split torus.
@@ -145,7 +126,7 @@ theorem comapOfSurjective_conjCoordinateIso_inv_le_kostantToralDefiningIdeal
           kostantTorusMatrix M b wt (SplitTorus.pointsMulEquiv p) := by
       rw [kostantTorusMatrix_apply]
       exact GeneralLinear.pointsMulEquiv_mapPointsFunctor_weightTorusCoordinateMap wt _ p
-    have hker := comapOfSurjective_conjCoordinateIso_inv_toIdeal_le_ker J P _ _
+    have hker := GeneralLinear.comapOfSurjective_conjCoordinateIso_inv_toIdeal_le_ker J P _
       (hmatrix ▸ htorus _ _)
     rwa [CommHopfAlgCat.Hom.mapPointsFunctor_app_apply, ofConv_toConv, AlgHom.id_comp] at hker
 
