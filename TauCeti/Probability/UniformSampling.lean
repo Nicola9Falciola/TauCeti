@@ -207,40 +207,81 @@ theorem uniformOn_not_injective_le [MeasurableSpace κ] [MeasurableSingletonClas
 
 end
 
-/-- Conditioning the uniform measure on a finite set `s` on an event `E` can increase the
-probability of an event `A` by at most the original probability of `Eᶜ`, provided `s ∩ E` is
-nonempty.  When `s ∩ E` is empty, Mathlib's `uniformOn (s ∩ E)` is the zero measure and the
+/-- Conditioning the uniform measure on `s` on an event `E` can increase the probability of an
+event `A` by at most the original probability of `Eᶜ`, for every measurable structure on `Ω`.
+The hypothesis `Measure.count s ≠ ∞` (finiteness of `s` under `MeasurableSingletonClass Ω`) cannot
+be dropped, since otherwise `uniformOn s` is the zero measure while `uniformOn (s ∩ E)` need not be.
+When `s ∩ E` has counting measure zero, Mathlib's `uniformOn (s ∩ E)` is the zero measure and the
 inequality remains valid under that convention.
 
 This is the upper half of the elementary coupling bound between a uniform law and its
 conditioning. -/
-theorem uniformOn_inter_le_add_compl {Ω : Type*} [MeasurableSpace Ω] [MeasurableSingletonClass Ω]
-    {s : Set Ω} (E A : Set Ω) (hs : s.Finite) :
+theorem uniformOn_inter_le_add_compl {Ω : Type*} [MeasurableSpace Ω] {s : Set Ω} (E A : Set Ω)
+    (hs : Measure.count s ≠ ∞) :
     uniformOn (s ∩ E) A ≤ uniformOn s A + uniformOn s Eᶜ := by
-  rcases s.eq_empty_or_nonempty with rfl | hs'
-  · simp
-  calc
-    uniformOn (s ∩ E) A
-      = uniformOn (s ∩ E) A * uniformOn s E + uniformOn (s ∩ E) A * uniformOn s Eᶜ := by
-        rw [← mul_add, uniformOn_compl E hs hs', mul_one]
-    _ ≤ uniformOn s A + uniformOn s Eᶜ := by
-      rw [← uniformOn_inter' hs]
-      exact add_le_add (measure_mono Set.inter_subset_left)
-        (mul_le_of_le_one_left bot_le prob_le_one)
+  have happly (t B : Set Ω) :
+      uniformOn t B = (Measure.count t)⁻¹ * Measure.count.restrict t B := by
+    rw [uniformOn, ProbabilityTheory.cond, smul_apply, smul_eq_mul]
+  rcases eq_or_ne (Measure.count (s ∩ E)) 0 with h0 | h0
+  · simp [uniformOn, cond_eq_zero_of_meas_eq_zero h0]
+  have hs0 : Measure.count s ≠ 0 := fun h ↦ h0 (measure_mono_null Set.inter_subset_left h)
+  have hsE : Measure.count (s ∩ E) ≠ ∞ :=
+    ne_top_of_le_ne_top hs (measure_mono Set.inter_subset_left)
+  -- `s` is covered by `s ∩ E` and by its part outside `E`.
+  have hcover : Measure.count s ≤ Measure.count (s ∩ E) + Measure.count.restrict s Eᶜ := by
+    refine (measure_le_inter_add_sdiff Measure.count s E).trans (add_le_add le_rfl ?_)
+    rw [Set.sdiff_eq, Set.inter_comm]
+    exact Measure.le_restrict_apply _ _
+  have hmul : uniformOn (s ∩ E) A * Measure.count (s ∩ E) = Measure.count.restrict (s ∩ E) A := by
+    rw [happly, mul_right_comm, ENNReal.inv_mul_cancel h0 hsE, one_mul]
+  calc uniformOn (s ∩ E) A
+      = uniformOn (s ∩ E) A * ((Measure.count s)⁻¹ * Measure.count s) := by
+        rw [ENNReal.inv_mul_cancel hs0 hs, mul_one]
+    _ ≤ uniformOn (s ∩ E) A *
+          ((Measure.count s)⁻¹ * (Measure.count (s ∩ E) + Measure.count.restrict s Eᶜ)) := by
+        gcongr
+    _ = (Measure.count s)⁻¹ * (uniformOn (s ∩ E) A * Measure.count (s ∩ E)) +
+          uniformOn (s ∩ E) A * ((Measure.count s)⁻¹ * Measure.count.restrict s Eᶜ) := by ring
+    _ ≤ (Measure.count s)⁻¹ * Measure.count.restrict s A +
+          1 * ((Measure.count s)⁻¹ * Measure.count.restrict s Eᶜ) := by
+        rw [hmul]
+        gcongr
+        · exact Set.inter_subset_left
+        · exact prob_le_one
+    _ = uniformOn s A + uniformOn s Eᶜ := by rw [one_mul, happly, happly]
 
-/-- Conditioning the uniform measure on a finite set `s` on an event `E` can decrease the
-probability of an event `A` by at most the original probability of `Eᶜ`, provided `s ∩ E` is
-nonempty.  When `s ∩ E` is empty, Mathlib's `uniformOn (s ∩ E)` is the zero measure and the
-inequality remains valid under that convention.
+/-- Conditioning the uniform measure on `s` on an event `E` can decrease the probability of an
+event `A` by at most the original probability of `Eᶜ`.  This holds for every set `s` and every
+measurable structure on `Ω`; in the degenerate cases, where Mathlib's `uniformOn` is the zero
+measure (for instance when `s` is infinite or `s ∩ E` is empty), it holds under that convention.
 
 This is the lower half of the elementary coupling bound between a uniform law and its
 conditioning. -/
-theorem uniformOn_le_inter_add_compl {Ω : Type*} [MeasurableSpace Ω] [MeasurableSingletonClass Ω]
-    {s : Set Ω} (E A : Set Ω) (hs : s.Finite) :
+theorem uniformOn_le_inter_add_compl {Ω : Type*} [MeasurableSpace Ω] {s : Set Ω} (E A : Set Ω) :
     uniformOn s A ≤ uniformOn (s ∩ E) A + uniformOn s Eᶜ := by
-  rw [← uniformOn_add_compl_eq E A hs]
-  exact add_le_add (mul_le_of_le_one_right bot_le prob_le_one)
-    (mul_le_of_le_one_left bot_le prob_le_one)
+  simp only [uniformOn, ProbabilityTheory.cond, smul_apply, smul_eq_mul]
+  -- Split the restriction to `s` along `E`; the part outside `E` has mass at most that of `Eᶜ`.
+  have hsplit : Measure.count.restrict s A ≤
+      Measure.count.restrict (s ∩ E) A + Measure.count.restrict s Eᶜ := calc
+    Measure.count.restrict s A
+        ≤ Measure.count.restrict (s ∩ E) A + Measure.count.restrict (s \ E) A := by
+      conv_lhs => rw [← Set.inter_union_sdiff s E]
+      exact Measure.le_iff'.1 (Measure.restrict_union_le _ _) A
+    _ ≤ Measure.count.restrict (s ∩ E) A + Measure.count.restrict s Eᶜ := by
+      refine add_le_add le_rfl ?_
+      calc Measure.count.restrict (s \ E) A
+          ≤ Measure.count (s \ E) := (measure_mono A.subset_univ).trans_eq (by simp)
+        _ ≤ Measure.count.restrict s Eᶜ := by
+          rw [Set.sdiff_eq, Set.inter_comm]
+          exact Measure.le_restrict_apply _ _
+  calc (Measure.count s)⁻¹ * Measure.count.restrict s A
+      ≤ (Measure.count s)⁻¹ *
+          (Measure.count.restrict (s ∩ E) A + Measure.count.restrict s Eᶜ) := by gcongr
+    _ ≤ (Measure.count (s ∩ E))⁻¹ * Measure.count.restrict (s ∩ E) A +
+          (Measure.count s)⁻¹ * Measure.count.restrict s Eᶜ := by
+      rw [mul_add]
+      gcongr
+      exact Set.inter_subset_left
 
 /-- The uniform measure on injective maps differs from the uniform measure on all maps only on the
 collision event: for every event `A`, the former is at most the latter plus the collision measure.
@@ -248,19 +289,19 @@ collision event: for every event `A`, the former is at most the latter plus the 
 When `ι → κ` is finite and an injective map `ι → κ` exists, these are the probabilities for
 uniform sampling without and with replacement, respectively.  The inequality also holds when the
 set of injective maps is empty or infinite, in which case its `uniformOn` measure is zero; this
-includes an infinite index type, or a nonempty index type with an infinite codomain type. -/
-theorem uniformOn_injective_le_add [MeasurableSpace κ] [MeasurableSingletonClass κ]
-    (A : Set (ι → κ)) :
+includes an infinite index type, or a nonempty index type with an infinite codomain type.  Any
+measurable structure on `κ` will do; singletons need not be measurable. -/
+theorem uniformOn_injective_le_add [MeasurableSpace κ] (A : Set (ι → κ)) :
     uniformOn {x : ι → κ | Function.Injective x} A ≤
       uniformOn Set.univ A + uniformOn Set.univ {x : ι → κ | ¬Function.Injective x} := by
   by_cases h0 : uniformOn {x : ι → κ | Function.Injective x} A = 0
   · simp [h0]
-  -- A finite nonempty set of injective maps forces `ι` and `ι → κ` to be finite.
-  obtain ⟨_, _⟩ : Finite ι ∧ Finite (ι → κ) := by
+  -- A finite nonempty set of injective maps forces `ι → κ` to be finite.
+  have : Finite (ι → κ) := by
     obtain ⟨f, hf⟩ : {x : ι → κ | Function.Injective x}.Nonempty :=
       Set.nonempty_iff_ne_empty.2 fun h ↦ h0 (by simp [h])
     rcases isEmpty_or_nonempty ι with hι | ⟨⟨i₀⟩⟩
-    · exact ⟨inferInstance, inferInstance⟩
+    · infer_instance
     classical
     have := (finite_of_uniformOn_ne_zero h0).to_subtype
     have : Finite κ := Finite.of_injective
@@ -268,9 +309,10 @@ theorem uniformOn_injective_le_add [MeasurableSpace κ] [MeasurableSingletonClas
         ↑{x : ι → κ | Function.Injective x}))
       fun y z h ↦ by simpa using congrFun (congrArg Subtype.val h) i₀
     have := Finite.of_injective f hf
-    exact ⟨inferInstance, inferInstance⟩
+    infer_instance
   simpa only [Set.univ_inter, Set.compl_ofPred] using
-    uniformOn_inter_le_add_compl {x : ι → κ | Function.Injective x} A Set.finite_univ
+    uniformOn_inter_le_add_compl (s := Set.univ) {x : ι → κ | Function.Injective x} A
+      (measure_ne_top _ _)
 
 /-- The uniform measure on all maps differs from the uniform measure on injective maps only on the
 collision event: for every event `A`, the former is at most the latter plus the collision measure.
@@ -278,20 +320,13 @@ collision event: for every event `A`, the former is at most the latter plus the 
 When `ι → κ` is finite and an injective map `ι → κ` exists, these are the probabilities for
 uniform sampling with and without replacement, respectively.  The inequality also holds in the
 degenerate cases: when no injective map exists, the measure on injective maps is zero and every map
-is a collision; when `ι → κ` is infinite, the uniform measure on all maps is zero. -/
-theorem uniformOn_univ_le_injective_add [MeasurableSpace κ] [MeasurableSingletonClass κ]
-    (A : Set (ι → κ)) :
+is a collision; when `ι → κ` is infinite, the uniform measure on all maps is zero.  Any measurable
+structure on `κ` will do; singletons need not be measurable. -/
+theorem uniformOn_univ_le_injective_add [MeasurableSpace κ] (A : Set (ι → κ)) :
     uniformOn Set.univ A ≤ uniformOn {x : ι → κ | Function.Injective x} A +
       uniformOn Set.univ {x : ι → κ | ¬Function.Injective x} := by
-  rcases finite_or_infinite ι with hι | hι
-  · by_cases h0 : uniformOn (Set.univ : Set (ι → κ)) A = 0
-    · simp [h0]
-    simpa only [Set.univ_inter, Set.compl_ofPred] using
-      uniformOn_le_inter_add_compl {x : ι → κ | Function.Injective x} A
-        (finite_of_uniformOn_ne_zero h0)
-  rcases finite_or_infinite κ with hκ | hκ
-  · exact le_add_left (measure_mono fun f _ ↦ not_injective_infinite_finite f)
-  · simp [(uniformOn_eq_zero' MeasurableSet.univ).2 (.inl Set.infinite_univ)]
+  simpa only [Set.univ_inter, Set.compl_ofPred] using
+    uniformOn_le_inter_add_compl (s := Set.univ) {x : ι → κ | Function.Injective x} A
 
 variable [Fintype ι] [Fintype κ]
 
