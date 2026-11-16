@@ -245,7 +245,7 @@ theorem uniformOn_injective_le_add [MeasurableSpace κ] (A : Set (ι → κ)) :
     have := Finite.of_injective f hf
     infer_instance
   simpa only [uniformOn, Set.univ_inter, Set.compl_ofPred] using
-    cond_inter_le_add_compl Measure.count (s := Set.univ) {x : ι → κ | Function.Injective x} A
+    cond_inter_le_add_compl Measure.count Set.univ {x : ι → κ | Function.Injective x} A
       (measure_ne_top _ _)
 
 /-- The uniform measure on all maps differs from the uniform measure on injective maps only on the
@@ -263,7 +263,7 @@ theorem uniformOn_univ_le_injective_add [MeasurableSpace κ] (A : Set (ι → κ
     uniformOn Set.univ A ≤ uniformOn {x : ι → κ | Function.Injective x} A +
       uniformOn Set.univ {x : ι → κ | ¬Function.Injective x} := by
   simpa only [uniformOn, Set.univ_inter, Set.compl_ofPred] using
-    cond_le_inter_add_compl Measure.count (s := Set.univ) {x : ι → κ | Function.Injective x} A
+    cond_le_inter_add_compl Measure.count Set.univ {x : ι → κ | Function.Injective x} A
 
 variable [Fintype ι] [Fintype κ]
 

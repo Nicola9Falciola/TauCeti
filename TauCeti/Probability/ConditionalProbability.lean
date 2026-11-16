@@ -390,7 +390,7 @@ When `s` and `E` are measurable, `μ[|s ∩ E]` is `μ[|s]` conditioned on `E`
 most the probability of `Eᶜ`: the upper half of the elementary coupling bound between a law and
 its conditioning. Otherwise the inequality still holds for Mathlib's `cond`, in which a
 non-measurable set has its outer measure, but need not have this reading. -/
-theorem cond_inter_le_add_compl (μ : Measure Ω) {s : Set Ω} (E A : Set Ω) (hs : μ s ≠ ∞) :
+theorem cond_inter_le_add_compl (μ : Measure Ω) (s E A : Set Ω) (hs : μ s ≠ ∞) :
     μ[A|s ∩ E] ≤ μ[A|s] + μ[Eᶜ|s] := by
   have happly (t B : Set Ω) : μ[B|t] = (μ t)⁻¹ * μ.restrict t B := by
     rw [cond, _root_.smul_apply, smul_eq_mul]
@@ -427,7 +427,7 @@ When `s` and `E` are measurable and `μ s ≠ ∞`, `μ[|s ∩ E]` is `μ[|s]` c
 (`cond_cond_eq_cond_inter'`), so conditioning on `E` can decrease the probability of `A` by at
 most the probability of `Eᶜ`: the lower half of the elementary coupling bound between a law and
 its conditioning. -/
-theorem cond_le_inter_add_compl (μ : Measure Ω) {s : Set Ω} (E A : Set Ω) :
+theorem cond_le_inter_add_compl (μ : Measure Ω) (s E A : Set Ω) :
     μ[A|s] ≤ μ[A|s ∩ E] + μ[Eᶜ|s] := by
   simp only [cond, _root_.smul_apply, smul_eq_mul]
   -- Split the restriction to `s` along `E`; the part outside `E` has mass at most that of `Eᶜ`.
