@@ -8,6 +8,7 @@ module
 public import Mathlib.Probability.UniformOn
 public import Mathlib.Data.Fintype.CardEmbedding
 import TauCeti.Data.Fintype.Card.Embedding
+import TauCeti.Probability.ConditionalProbability
 
 /-!
 # Uniform sampling with and without replacement
@@ -45,11 +46,11 @@ estimate is the classical union bound over unordered coordinate pairs, using
 * `uniformOn_not_injective_le` bounds the uniform-measure mass of collisions;
 * `uniformOn_injective_apply_eq` and `uniformOn_not_injective_apply_eq` compute the exact
   uniform-measure masses;
-* `uniformOn_inter_le_add_compl` and `uniformOn_le_inter_add_compl` compare `uniformOn s` with
-  `uniformOn (s ∩ E)`, which for a finite `s` with measurable singletons is its conditioning on `E`;
 * `uniformOn_injective_le_add` and `uniformOn_univ_le_injective_add` compare arbitrary events
   under the uniform measures on injective maps and on all maps (sampling without and with
-  replacement, for finite types with measurable singletons);
+  replacement, for finite types with measurable singletons); they specialise the conditioning
+  comparisons `ProbabilityTheory.cond_inter_le_add_compl` and
+  `ProbabilityTheory.cond_le_inter_add_compl` to the counting measure;
 * `uniformOn_injective_le_add_choose_two_div` and
   `uniformOn_univ_le_injective_add_choose_two_div` give the quantitative forms.
 * `uniformOn_injective_mem_range_and_mem_range` computes the probability that a uniform
@@ -213,96 +214,6 @@ theorem uniformOn_not_injective_le [MeasurableSpace κ] [MeasurableSingletonClas
 
 end
 
-/-- For every event `A`, the uniform measure on `s ∩ E` gives `A` at most the mass that the uniform
-measure on `s` gives `A`, plus the mass it gives `Eᶜ`.  This holds for Mathlib's `uniformOn` under
-every measurable structure on `Ω`, provided `Measure.count s ≠ ∞`.  That hypothesis cannot be
-dropped, since otherwise `uniformOn s` is the zero measure while `uniformOn (s ∩ E)` need not be.
-When `s ∩ E` has counting measure zero, Mathlib's `uniformOn (s ∩ E)` is the zero measure and the
-inequality remains valid under that convention.
-
-With measurable singletons, `Measure.count s ≠ ∞` says that `s` is finite, `uniformOn s A` is the
-proportion of `s` lying in `A`, and `uniformOn (s ∩ E) A` is the conditional probability of `A`
-given `E` under the uniform law on `s`: conditioning on `E` can increase the probability of `A` by
-at most the probability of `Eᶜ`.  Without measurable singletons, `Measure.count` of a set that is
-not measurable is the infimum of the counts of its measurable supersets, so these values need not
-be such proportions; for instance, on `Bool` with the trivial σ-algebra,
-`uniformOn {true} {false} = 1`.
-
-This is the upper half of the elementary coupling bound between a uniform law and its
-conditioning. -/
-theorem uniformOn_inter_le_add_compl {Ω : Type*} [MeasurableSpace Ω] {s : Set Ω} (E A : Set Ω)
-    (hs : Measure.count s ≠ ∞) :
-    uniformOn (s ∩ E) A ≤ uniformOn s A + uniformOn s Eᶜ := by
-  have happly (t B : Set Ω) :
-      uniformOn t B = (Measure.count t)⁻¹ * Measure.count.restrict t B := by
-    rw [uniformOn, ProbabilityTheory.cond, smul_apply, smul_eq_mul]
-  rcases eq_or_ne (Measure.count (s ∩ E)) 0 with h0 | h0
-  · simp [uniformOn, cond_eq_zero_of_meas_eq_zero h0]
-  have hs0 : Measure.count s ≠ 0 := fun h ↦ h0 (measure_mono_null Set.inter_subset_left h)
-  have hsE : Measure.count (s ∩ E) ≠ ∞ :=
-    ne_top_of_le_ne_top hs (measure_mono Set.inter_subset_left)
-  -- `s` is covered by `s ∩ E` and by its part outside `E`.
-  have hcover : Measure.count s ≤ Measure.count (s ∩ E) + Measure.count.restrict s Eᶜ := by
-    refine (measure_le_inter_add_sdiff Measure.count s E).trans (add_le_add le_rfl ?_)
-    rw [Set.sdiff_eq, Set.inter_comm]
-    exact Measure.le_restrict_apply _ _
-  have hmul : uniformOn (s ∩ E) A * Measure.count (s ∩ E) = Measure.count.restrict (s ∩ E) A := by
-    rw [happly, mul_right_comm, ENNReal.inv_mul_cancel h0 hsE, one_mul]
-  calc uniformOn (s ∩ E) A
-      = uniformOn (s ∩ E) A * ((Measure.count s)⁻¹ * Measure.count s) := by
-        rw [ENNReal.inv_mul_cancel hs0 hs, mul_one]
-    _ ≤ uniformOn (s ∩ E) A *
-          ((Measure.count s)⁻¹ * (Measure.count (s ∩ E) + Measure.count.restrict s Eᶜ)) := by
-        gcongr
-    _ = (Measure.count s)⁻¹ * (uniformOn (s ∩ E) A * Measure.count (s ∩ E)) +
-          uniformOn (s ∩ E) A * ((Measure.count s)⁻¹ * Measure.count.restrict s Eᶜ) := by ring
-    _ ≤ (Measure.count s)⁻¹ * Measure.count.restrict s A +
-          1 * ((Measure.count s)⁻¹ * Measure.count.restrict s Eᶜ) := by
-        rw [hmul]
-        gcongr
-        · exact Set.inter_subset_left
-        · exact prob_le_one
-    _ = uniformOn s A + uniformOn s Eᶜ := by rw [one_mul, happly, happly]
-
-/-- For every event `A`, the uniform measure on `s` gives `A` at most the mass that the uniform
-measure on `s ∩ E` gives `A`, plus the mass that the uniform measure on `s` gives `Eᶜ`.  This holds
-for Mathlib's `uniformOn`, for every set `s` and every measurable structure on `Ω`; in the
-degenerate cases, where Mathlib's `uniformOn` is the zero measure (for instance when `s` is
-infinite or `s ∩ E` is empty), it holds under that convention.
-
-With measurable singletons and `s` finite, `uniformOn (s ∩ E)` is the uniform law on `s`
-conditioned on `E` (see `uniformOn_inter_le_add_compl`), so this says that conditioning on `E` can
-decrease the probability of `A` by at most the probability of `Eᶜ`.  Without measurable singletons
-that interpretation can fail when `s`, `E` or `A` is not measurable.
-
-This is the lower half of the elementary coupling bound between a uniform law and its
-conditioning. -/
-theorem uniformOn_le_inter_add_compl {Ω : Type*} [MeasurableSpace Ω] {s : Set Ω} (E A : Set Ω) :
-    uniformOn s A ≤ uniformOn (s ∩ E) A + uniformOn s Eᶜ := by
-  simp only [uniformOn, ProbabilityTheory.cond, smul_apply, smul_eq_mul]
-  -- Split the restriction to `s` along `E`; the part outside `E` has mass at most that of `Eᶜ`.
-  have hsplit : Measure.count.restrict s A ≤
-      Measure.count.restrict (s ∩ E) A + Measure.count.restrict s Eᶜ := calc
-    Measure.count.restrict s A
-        ≤ Measure.count.restrict (s ∩ E) A + Measure.count.restrict (s \ E) A := by
-      conv_lhs => rw [← Set.inter_union_sdiff s E]
-      exact Measure.le_iff'.1 (Measure.restrict_union_le _ _) A
-    _ ≤ Measure.count.restrict (s ∩ E) A + Measure.count.restrict s Eᶜ := by
-      refine add_le_add le_rfl ?_
-      calc Measure.count.restrict (s \ E) A
-          ≤ Measure.count (s \ E) := (measure_mono A.subset_univ).trans_eq (by simp)
-        _ ≤ Measure.count.restrict s Eᶜ := by
-          rw [Set.sdiff_eq, Set.inter_comm]
-          exact Measure.le_restrict_apply _ _
-  calc (Measure.count s)⁻¹ * Measure.count.restrict s A
-      ≤ (Measure.count s)⁻¹ *
-          (Measure.count.restrict (s ∩ E) A + Measure.count.restrict s Eᶜ) := by gcongr
-    _ ≤ (Measure.count (s ∩ E))⁻¹ * Measure.count.restrict (s ∩ E) A +
-          (Measure.count s)⁻¹ * Measure.count.restrict s Eᶜ := by
-      rw [mul_add]
-      gcongr
-      exact Set.inter_subset_left
-
 /-- The uniform measure on injective maps differs from the uniform measure on all maps only on the
 collision event: for every event `A`, the former is at most the latter plus the collision measure.
 
@@ -333,8 +244,8 @@ theorem uniformOn_injective_le_add [MeasurableSpace κ] (A : Set (ι → κ)) :
       fun y z h ↦ by simpa using congrFun (congrArg Subtype.val h) i₀
     have := Finite.of_injective f hf
     infer_instance
-  simpa only [Set.univ_inter, Set.compl_ofPred] using
-    uniformOn_inter_le_add_compl (s := Set.univ) {x : ι → κ | Function.Injective x} A
+  simpa only [uniformOn, Set.univ_inter, Set.compl_ofPred] using
+    cond_inter_le_add_compl Measure.count (s := Set.univ) {x : ι → κ | Function.Injective x} A
       (measure_ne_top _ _)
 
 /-- The uniform measure on all maps differs from the uniform measure on injective maps only on the
@@ -351,8 +262,8 @@ not be measurable, and these measures need not be the sampling probabilities. -/
 theorem uniformOn_univ_le_injective_add [MeasurableSpace κ] (A : Set (ι → κ)) :
     uniformOn Set.univ A ≤ uniformOn {x : ι → κ | Function.Injective x} A +
       uniformOn Set.univ {x : ι → κ | ¬Function.Injective x} := by
-  simpa only [Set.univ_inter, Set.compl_ofPred] using
-    uniformOn_le_inter_add_compl (s := Set.univ) {x : ι → κ | Function.Injective x} A
+  simpa only [uniformOn, Set.univ_inter, Set.compl_ofPred] using
+    cond_le_inter_add_compl Measure.count (s := Set.univ) {x : ι → κ | Function.Injective x} A
 
 variable [Fintype ι] [Fintype κ]
 
