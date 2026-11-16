@@ -23,12 +23,17 @@ The exact collision probability on a nonempty function space is
 When the function space is empty, Mathlib's `uniformOn` is instead the zero measure; the union
 bound remains valid under that convention, but the complement formula requires nonemptiness.
 
-When injective maps exist, conditioning the random map to be injective is uniform sampling without
-replacement.  The main results compare every event under the uniform measures on all maps and on
-injective maps, with the collision bound as error.  These inequalities remain valid in the
-degenerate cases, where Mathlib's `uniformOn` is the zero measure (no injective map exists, or the
-set of maps is infinite); in the feasible case they are the coupling step used to compare a finite
-exchangeable law with the product of its empirical measure.
+When `ι` and `κ` are finite, singletons of `κ` are measurable and injective maps exist,
+conditioning the random map to be injective is uniform sampling without replacement.  The main
+results compare every event under the uniform measures on all maps and on injective maps.  The
+exact comparisons `uniformOn_injective_le_add` and `uniformOn_univ_le_injective_add`, whose error
+term is the collision measure, hold for Mathlib's `uniformOn` for all types `ι` and `κ` and every
+measurable structure on `κ`, including the degenerate cases where `uniformOn` is the zero measure
+(no injective map exists, or the set of maps is infinite); without measurable singletons they
+compare these measures, which need not be sampling probabilities.  The quantitative forms, with the
+collision bound `(Fintype.card ι).choose 2 / Fintype.card κ` as error, assume finite types with
+measurable singletons.  In the feasible case these inequalities are the coupling step used to
+compare a finite exchangeable law with the product of its empirical measure.
 
 The exact formula counts embeddings using Mathlib's `Fintype.card_embedding_eq`. The simpler
 estimate is the classical union bound over unordered coordinate pairs, using
@@ -40,10 +45,11 @@ estimate is the classical union bound over unordered coordinate pairs, using
 * `uniformOn_not_injective_le` bounds the uniform-measure mass of collisions;
 * `uniformOn_injective_apply_eq` and `uniformOn_not_injective_apply_eq` compute the exact
   uniform-measure masses;
-* `uniformOn_inter_le_add_compl` and `uniformOn_le_inter_add_compl` give the general conditioning
-  comparison;
+* `uniformOn_inter_le_add_compl` and `uniformOn_le_inter_add_compl` compare `uniformOn s` with
+  `uniformOn (s ∩ E)`, which for a finite `s` with measurable singletons is its conditioning on `E`;
 * `uniformOn_injective_le_add` and `uniformOn_univ_le_injective_add` compare arbitrary events
-  under sampling without and with replacement;
+  under the uniform measures on injective maps and on all maps (sampling without and with
+  replacement, for finite types with measurable singletons);
 * `uniformOn_injective_le_add_choose_two_div` and
   `uniformOn_univ_le_injective_add_choose_two_div` give the quantitative forms.
 * `uniformOn_injective_mem_range_and_mem_range` computes the probability that a uniform
@@ -207,12 +213,20 @@ theorem uniformOn_not_injective_le [MeasurableSpace κ] [MeasurableSingletonClas
 
 end
 
-/-- Conditioning the uniform measure on `s` on an event `E` can increase the probability of an
-event `A` by at most the original probability of `Eᶜ`, for every measurable structure on `Ω`.
-The hypothesis `Measure.count s ≠ ∞` (finiteness of `s` under `MeasurableSingletonClass Ω`) cannot
-be dropped, since otherwise `uniformOn s` is the zero measure while `uniformOn (s ∩ E)` need not be.
+/-- For every event `A`, the uniform measure on `s ∩ E` gives `A` at most the mass that the uniform
+measure on `s` gives `A`, plus the mass it gives `Eᶜ`.  This holds for Mathlib's `uniformOn` under
+every measurable structure on `Ω`, provided `Measure.count s ≠ ∞`.  That hypothesis cannot be
+dropped, since otherwise `uniformOn s` is the zero measure while `uniformOn (s ∩ E)` need not be.
 When `s ∩ E` has counting measure zero, Mathlib's `uniformOn (s ∩ E)` is the zero measure and the
 inequality remains valid under that convention.
+
+With measurable singletons, `Measure.count s ≠ ∞` says that `s` is finite, `uniformOn s A` is the
+proportion of `s` lying in `A`, and `uniformOn (s ∩ E) A` is the conditional probability of `A`
+given `E` under the uniform law on `s`: conditioning on `E` can increase the probability of `A` by
+at most the probability of `Eᶜ`.  Without measurable singletons, `Measure.count` of a set that is
+not measurable is the infimum of the counts of its measurable supersets, so these values need not
+be such proportions; for instance, on `Bool` with the trivial σ-algebra,
+`uniformOn {true} {false} = 1`.
 
 This is the upper half of the elementary coupling bound between a uniform law and its
 conditioning. -/
@@ -250,10 +264,16 @@ theorem uniformOn_inter_le_add_compl {Ω : Type*} [MeasurableSpace Ω] {s : Set 
         · exact prob_le_one
     _ = uniformOn s A + uniformOn s Eᶜ := by rw [one_mul, happly, happly]
 
-/-- Conditioning the uniform measure on `s` on an event `E` can decrease the probability of an
-event `A` by at most the original probability of `Eᶜ`.  This holds for every set `s` and every
-measurable structure on `Ω`; in the degenerate cases, where Mathlib's `uniformOn` is the zero
-measure (for instance when `s` is infinite or `s ∩ E` is empty), it holds under that convention.
+/-- For every event `A`, the uniform measure on `s` gives `A` at most the mass that the uniform
+measure on `s ∩ E` gives `A`, plus the mass that the uniform measure on `s` gives `Eᶜ`.  This holds
+for Mathlib's `uniformOn`, for every set `s` and every measurable structure on `Ω`; in the
+degenerate cases, where Mathlib's `uniformOn` is the zero measure (for instance when `s` is
+infinite or `s ∩ E` is empty), it holds under that convention.
+
+With measurable singletons and `s` finite, `uniformOn (s ∩ E)` is the uniform law on `s`
+conditioned on `E` (see `uniformOn_inter_le_add_compl`), so this says that conditioning on `E` can
+decrease the probability of `A` by at most the probability of `Eᶜ`.  Without measurable singletons
+that interpretation can fail when `s`, `E` or `A` is not measurable.
 
 This is the lower half of the elementary coupling bound between a uniform law and its
 conditioning. -/
@@ -286,11 +306,14 @@ theorem uniformOn_le_inter_add_compl {Ω : Type*} [MeasurableSpace Ω] {s : Set 
 /-- The uniform measure on injective maps differs from the uniform measure on all maps only on the
 collision event: for every event `A`, the former is at most the latter plus the collision measure.
 
-When `ι → κ` is finite and an injective map `ι → κ` exists, these are the probabilities for
-uniform sampling without and with replacement, respectively.  The inequality also holds when the
-set of injective maps is empty or infinite, in which case its `uniformOn` measure is zero; this
-includes an infinite index type, or a nonempty index type with an infinite codomain type.  Any
-measurable structure on `κ` will do; singletons need not be measurable. -/
+This holds for Mathlib's `uniformOn` for all types `ι` and `κ` and every measurable structure on
+`κ`.  It includes the degenerate cases where the set of injective maps is empty or infinite, so
+that its `uniformOn` measure is zero; this covers an infinite index type, or a nonempty index type
+with an infinite codomain type.  When `ι` and `κ` are finite, singletons of `κ` are measurable and
+an injective map `ι → κ` exists, the left side is the probability of `A` under uniform sampling
+without replacement, and the right side is its probability under uniform sampling with
+replacement plus the collision probability.  Without measurable singletons the set of injective
+maps need not be measurable, and these measures need not be the sampling probabilities. -/
 theorem uniformOn_injective_le_add [MeasurableSpace κ] (A : Set (ι → κ)) :
     uniformOn {x : ι → κ | Function.Injective x} A ≤
       uniformOn Set.univ A + uniformOn Set.univ {x : ι → κ | ¬Function.Injective x} := by
@@ -317,11 +340,14 @@ theorem uniformOn_injective_le_add [MeasurableSpace κ] (A : Set (ι → κ)) :
 /-- The uniform measure on all maps differs from the uniform measure on injective maps only on the
 collision event: for every event `A`, the former is at most the latter plus the collision measure.
 
-When `ι → κ` is finite and an injective map `ι → κ` exists, these are the probabilities for
-uniform sampling with and without replacement, respectively.  The inequality also holds in the
-degenerate cases: when no injective map exists, the measure on injective maps is zero and every map
-is a collision; when `ι → κ` is infinite, the uniform measure on all maps is zero.  Any measurable
-structure on `κ` will do; singletons need not be measurable. -/
+This holds for Mathlib's `uniformOn` for all types `ι` and `κ` and every measurable structure on
+`κ`, including the degenerate cases: when no injective map exists, the measure on injective maps is
+zero and every map is a collision; when `ι → κ` is infinite, the uniform measure on all maps is
+zero.  When `ι` and `κ` are finite, singletons of `κ` are measurable and an injective map `ι → κ`
+exists, the left side is the probability of `A` under uniform sampling with replacement, and the
+right side is its probability under uniform sampling without replacement plus the collision
+probability.  Without measurable singletons the set of injective maps and the collision event need
+not be measurable, and these measures need not be the sampling probabilities. -/
 theorem uniformOn_univ_le_injective_add [MeasurableSpace κ] (A : Set (ι → κ)) :
     uniformOn Set.univ A ≤ uniformOn {x : ι → κ | Function.Injective x} A +
       uniformOn Set.univ {x : ι → κ | ¬Function.Injective x} := by
