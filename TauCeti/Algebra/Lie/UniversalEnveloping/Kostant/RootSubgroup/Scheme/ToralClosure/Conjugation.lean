@@ -112,8 +112,8 @@ theorem comapOfSurjective_conjCoordinateIso_inv_le_kostantToralDefiningIdeal
         kostantRootSubgroupMatrix e h ρ M hM i (hnil i) b q := by
       rw [GeneralLinear.pointsMulEquiv_apply]
       exact pointsMulEquiv_kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b _ q
-    have hker := GeneralLinear.comapOfSurjective_conjCoordinateIso_inv_toIdeal_le_ker J P _
-      (hmatrix ▸ hroot _ i q)
+    have hker := (GeneralLinear.comapOfSurjective_conjCoordinateIso_inv_toIdeal_le_ker_iff J P
+      _).mpr (hmatrix ▸ hroot _ i q)
     rwa [ofConv_toConv, AlgHom.id_comp] at hker
   · -- Evaluate at the generic point of the split torus.
     let t := GeneralLinear.weightTorusCoordinateMap (R := ℤ) wt
@@ -126,8 +126,8 @@ theorem comapOfSurjective_conjCoordinateIso_inv_le_kostantToralDefiningIdeal
           kostantTorusMatrix M b wt (SplitTorus.pointsMulEquiv p) := by
       rw [kostantTorusMatrix_apply]
       exact GeneralLinear.pointsMulEquiv_mapPointsFunctor_weightTorusCoordinateMap wt _ p
-    have hker := GeneralLinear.comapOfSurjective_conjCoordinateIso_inv_toIdeal_le_ker J P _
-      (hmatrix ▸ htorus _ _)
+    have hker := (GeneralLinear.comapOfSurjective_conjCoordinateIso_inv_toIdeal_le_ker_iff J P
+      _).mpr (hmatrix ▸ htorus _ _)
     rwa [CommHopfAlgCat.Hom.mapPointsFunctor_app_apply, ofConv_toConv, AlgHom.id_comp] at hker
 
 /-- The coordinate morphism from the quotient cut out by `J` to the toral-closure quotient,
@@ -260,21 +260,11 @@ theorem conj_mem_hopfIdealPointsSubgroup_of_mem_kostantToralPointsSubgroup
     Matrix.GeneralLinearGroup.map (algebraMap ℤ A) P * g *
         (Matrix.GeneralLinearGroup.map (algebraMap ℤ A) P)⁻¹ ∈
       GeneralLinear.hopfIdealPointsSubgroup n J A := by
-  let c := GeneralLinear.conjCoordinateIso (R := ℤ) P
-  have hle := comapOfSurjective_conjCoordinateIso_inv_le_kostantToralDefiningIdeal
-    e h ρ M hM hnil b wt J P hroot htorus
-  rw [mem_kostantToralPointsSubgroup_iff] at hg
-  rw [← MulEquiv.apply_symm_apply (GeneralLinear.pointsMulEquiv (R := ℤ) (A := A) n) g,
-    ← GeneralLinear.pointsMulEquiv_toConv_comp_conjCoordinateIso,
-    GeneralLinear.mem_hopfIdealPointsSubgroup_iff, MulEquiv.symm_apply_apply]
-  intro x hx
-  -- The coordinate `c x` lies in the toral defining ideal, since `c⁻¹ (c x) = x ∈ J`.
-  have hcx : c.hom.hom x ∈ kostantToralDefiningIdeal e h ρ M hM hnil b wt := by
-    apply hle
-    rw [HopfIdeal.mem_comapOfSurjective, ← _root_.CommHopfAlgCat.comp_apply, Iso.hom_inv_id,
-      _root_.CommHopfAlgCat.id_apply]
-    exact hx
-  exact hg _ hcx
+  rw [kostantToralPointsSubgroup_def] at hg
+  exact (GeneralLinear.mem_hopfIdealPointsSubgroup_comapOfSurjective_conjCoordinateIso_inv_iff
+    J P g).mp (GeneralLinear.hopfIdealPointsSubgroup_le_of_le n
+      (comapOfSurjective_conjCoordinateIso_inv_le_kostantToralDefiningIdeal
+        e h ρ M hM hnil b wt J P hroot htorus) A hg)
 
 end UniversalProperty
 

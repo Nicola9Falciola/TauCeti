@@ -14,7 +14,7 @@ public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.UpperTriangular.Basic
 If conjugation by a constant invertible matrix makes an algebra-valued point upper triangular,
 then that point kills the upper-triangular defining ideal pulled back along the inverse coordinate
 automorphism. The criterion applies over any commutative base ring; it is the upper-triangular
-case of `TauCeti.GeneralLinear.comapOfSurjective_conjCoordinateIso_inv_toIdeal_le_ker`.
+case of `TauCeti.GeneralLinear.comapOfSurjective_conjCoordinateIso_inv_toIdeal_le_ker_iff`.
 -/
 
 public section
@@ -41,7 +41,7 @@ theorem comap_le_ker_of_conjugate
       (GeneralLinear.conjCoordinateIso P).inv.hom
       (ConcreteCategory.bijective_of_isIso (GeneralLinear.conjCoordinateIso P).inv).2).toIdeal ≤
         RingHom.ker f.toRingHom :=
-  GeneralLinear.comapOfSurjective_conjCoordinateIso_inv_toIdeal_le_ker _ P (toConv f) <| by
-    rwa [hopfIdealPointsSubgroup_eq, UpperTriangularGroup.mem_iff]
+  (GeneralLinear.comapOfSurjective_conjCoordinateIso_inv_toIdeal_le_ker_iff _ P
+    (toConv f)).mpr <| by rwa [hopfIdealPointsSubgroup_eq, UpperTriangularGroup.mem_iff]
 
 end TauCeti.GeneralLinear.UpperTriangular

@@ -113,32 +113,6 @@ noncomputable def rootSubgroupPoints (k : Fin 4 ⊕ Fin 4) (A : Type v) [CommRin
     fun _ => TauCeti.GeneralLinear.pointsMulEquiv_mapPointsFunctor_mem_generatedPointsSubgroup
       26 generator (.inl k) A _
 
-/-- **A numbered simple-root point of the carrier over `𝔽₂` is the corresponding point of the
-integral carrier**, as a matrix. -/
-@[simp]
-theorem coe_rootSubgroupPoints (k : Fin 4 ⊕ Fin 4) (A : Type v) [CommRing A]
-    [Algebra (ZMod 2) A] (u : Multiplicative A) :
-    (rootSubgroupPoints k A u : _root_.Matrix.GeneralLinearGroup (Fin 26) A) =
-      (_root_.TauCeti.F4ShortRoot.rootSubgroupPoints k A u :
-        _root_.Matrix.GeneralLinearGroup (Fin 26) A) := by
-  set q : HopfAlgebra.points (R := ZMod 2)
-      (H := AdditiveGroup.coordinateHopfAlgebra (ZMod 2)) (CommAlgCat.of (ZMod 2) A) :=
-    (AdditiveGroup.gaPointsMulEquiv (R := ZMod 2) (A := A)).symm u with hqdef
-  have hu : AdditiveGroup.gaPointsMulEquiv (R := ZMod 2) (A := A) q = u := by
-    rw [hqdef, MulEquiv.apply_symm_apply]
-  have hq := pointsMulEquiv_kostantRootSubgroupToralBaseChangeCoordinateMap rootGen cartanGen
-    rep lattice.toAddSubgroup rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator
-    latticeBasis f4ShortRootWeight (ZMod 2) k
-    (CommAlgCat.of (ZMod 2) A) q
-  rw [hu] at hq
-  have hcomp := CommHopfAlgCat.mapPointsFunctor_eq_quotientPointsHom_of_mkQuotient_comp _ _ _
-    ((mkQuotient_comp_kostantRootSubgroupToralBaseChangePresentationCoordinateMap rootGen
-        cartanGen rep lattice.toAddSubgroup rep_kostantForm_mem_lattice
-        isNilpotent_rep_serreRootGenerator latticeBasis f4ShortRootWeight (ZMod 2) k).trans
-      (generator_inl k).symm) (CommAlgCat.of (ZMod 2) A) q
-  rw [_root_.TauCeti.F4ShortRoot.coe_rootSubgroupPoints, ← hq, ← hcomp]
-  rfl
-
 /-- A numbered simple-root point of the carrier over `𝔽₂` is the image of the corresponding point
 of `𝔾ₐ` under the generating coordinate map. -/
 theorem coe_rootSubgroupPoints_gaPointsMulEquiv (k : Fin 4 ⊕ Fin 4) (A : Type v) [CommRing A]
@@ -152,6 +126,23 @@ theorem coe_rootSubgroupPoints_gaPointsMulEquiv (k : Fin 4 ⊕ Fin 4) (A : Type 
           (CommAlgCat.of (ZMod 2) A) q) := by
   rw [rootSubgroupPoints]
   exact congrArg _ (congrArg _ (MulEquiv.symm_apply_apply _ q))
+
+/-- **A numbered simple-root point of the carrier over `𝔽₂` is the corresponding point of the
+integral carrier**, as a matrix. -/
+@[simp]
+theorem coe_rootSubgroupPoints (k : Fin 4 ⊕ Fin 4) (A : Type v) [CommRing A]
+    [Algebra (ZMod 2) A] (u : Multiplicative A) :
+    (rootSubgroupPoints k A u : _root_.Matrix.GeneralLinearGroup (Fin 26) A) =
+      (_root_.TauCeti.F4ShortRoot.rootSubgroupPoints k A u :
+        _root_.Matrix.GeneralLinearGroup (Fin 26) A) := by
+  set q : HopfAlgebra.points (R := ZMod 2)
+      (H := AdditiveGroup.coordinateHopfAlgebra (ZMod 2)) (CommAlgCat.of (ZMod 2) A) :=
+    (AdditiveGroup.gaPointsMulEquiv (R := ZMod 2) (A := A)).symm u with hqdef
+  have hu : AdditiveGroup.gaPointsMulEquiv (R := ZMod 2) (A := A) q = u := by
+    rw [hqdef, MulEquiv.apply_symm_apply]
+  rw [← hu, coe_rootSubgroupPoints_gaPointsMulEquiv, generator_inl,
+    pointsMulEquiv_mapPointsFunctor_kostantRootSubgroupGeneralLinearBaseChangeCoordinateMap,
+    _root_.TauCeti.F4ShortRoot.coe_rootSubgroupPoints]
 
 /-- The split weight torus inside the points of the carrier over `𝔽₂`. -/
 noncomputable def weightTorusPoints (A : Type v) [CommRing A] [Algebra (ZMod 2) A] :

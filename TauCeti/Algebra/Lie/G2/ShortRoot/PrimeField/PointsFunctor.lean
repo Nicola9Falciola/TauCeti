@@ -413,18 +413,9 @@ theorem coe_rootSubgroupPoints (k : Fin 2 ⊕ Fin 2) (A : Type v) [CommRing A]
     (AdditiveGroup.gaPointsMulEquiv (R := ZMod 3) (A := A)).symm u with hqdef
   have hu : AdditiveGroup.gaPointsMulEquiv (R := ZMod 3) (A := A) q = u := by
     rw [hqdef, MulEquiv.apply_symm_apply]
-  have hq := pointsMulEquiv_kostantRootSubgroupToralBaseChangeCoordinateMap rootGen cartanGen
-    rep lattice.toAddSubgroup rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator
-    latticeBasis weight (ZMod 3) k
-    (CommAlgCat.of (ZMod 3) A) q
-  rw [hu] at hq
-  have hcomp := CommHopfAlgCat.mapPointsFunctor_eq_quotientPointsHom_of_mkQuotient_comp _ _ _
-    ((mkQuotient_comp_kostantRootSubgroupToralBaseChangePresentationCoordinateMap rootGen
-        cartanGen rep lattice.toAddSubgroup rep_kostantForm_mem_lattice
-        isNilpotent_rep_serreRootGenerator latticeBasis weight (ZMod 3) k).trans
-      (generator_inl k).symm) (CommAlgCat.of (ZMod 3) A) q
-  rw [IntegralToralClosure.coe_rootSubgroupPoints_eq_kostantRootSubgroupMatrix, ← hq, ← hcomp,
-    ← coe_rootSubgroupPoints_gaPointsMulEquiv k A q, hu]
+  rw [← hu, coe_rootSubgroupPoints_gaPointsMulEquiv, generator_inl,
+    pointsMulEquiv_mapPointsFunctor_kostantRootSubgroupGeneralLinearBaseChangeCoordinateMap,
+    IntegralToralClosure.coe_rootSubgroupPoints_eq_kostantRootSubgroupMatrix]
 
 /-- The split weight torus inside the points of the carrier. -/
 noncomputable def weightTorusPoints (A : Type v) [CommRing A] [Algebra (ZMod 3) A] :
