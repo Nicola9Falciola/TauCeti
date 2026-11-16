@@ -378,6 +378,19 @@ theorem cond_univ_restrict (μ : Measure Ω) (s : Set Ω) : (μ.restrict s)[|uni
 
 /-! ### Conditioning on a smaller event -/
 
+/-- Restricting `μ` to `s` gives an event `A` at most the mass that the restriction to `s ∩ E`
+gives `A`, plus the mass that the restriction to `s` gives `Eᶜ`. No set needs to be measurable. -/
+private theorem restrict_le_restrict_inter_add_compl (μ : Measure Ω) (s E A : Set Ω) :
+    μ.restrict s A ≤ μ.restrict (s ∩ E) A + μ.restrict s Eᶜ := calc
+  μ.restrict s A ≤ μ.restrict (s ∩ E) A + μ.restrict (s \ E) A := by
+    conv_lhs => rw [← Set.inter_union_sdiff s E]
+    exact (Measure.le_iff'.1 (Measure.restrict_union_le _ _) A).trans_eq (_root_.add_apply _ _ _)
+  _ ≤ μ.restrict (s ∩ E) A + μ.restrict s Eᶜ := by
+    -- The part of `s` outside `E` has mass at most that of `Eᶜ` under the restriction to `s`.
+    refine add_le_add le_rfl ((measure_mono A.subset_univ).trans ?_)
+    rw [Measure.restrict_apply_univ, Set.sdiff_eq, Set.inter_comm]
+    exact Measure.le_restrict_apply _ _
+
 /-- For every event `A`, conditioning `μ` on `s ∩ E` gives `A` at most the mass that conditioning
 on `s` gives `A`, plus the mass it gives `Eᶜ`, provided `μ s ≠ ∞`. That hypothesis cannot be
 dropped, since otherwise `μ[|s]` is the zero measure while `μ[|s ∩ E]` need not be: for the
@@ -400,9 +413,8 @@ theorem cond_inter_le_add_compl (μ : Measure Ω) (s E A : Set Ω) (hs : μ s �
   have hsE : μ (s ∩ E) ≠ ∞ := ne_top_of_le_ne_top hs (measure_mono Set.inter_subset_left)
   -- `s` is covered by `s ∩ E` and by its part outside `E`.
   have hcover : μ s ≤ μ (s ∩ E) + μ.restrict s Eᶜ := by
-    refine (measure_le_inter_add_sdiff μ s E).trans (add_le_add le_rfl ?_)
-    rw [Set.sdiff_eq, Set.inter_comm]
-    exact Measure.le_restrict_apply _ _
+    simpa only [Measure.restrict_apply_univ] using
+      restrict_le_restrict_inter_add_compl μ s E univ
   have hmul : μ[A|s ∩ E] * μ (s ∩ E) = μ.restrict (s ∩ E) A := by
     rw [happly, mul_right_comm, ENNReal.inv_mul_cancel h0 hsE, one_mul]
   calc μ[A|s ∩ E]
@@ -430,18 +442,7 @@ its conditioning. -/
 theorem cond_le_inter_add_compl (μ : Measure Ω) (s E A : Set Ω) :
     μ[A|s] ≤ μ[A|s ∩ E] + μ[Eᶜ|s] := by
   simp only [cond, _root_.smul_apply, smul_eq_mul]
-  -- Split the restriction to `s` along `E`; the part outside `E` has mass at most that of `Eᶜ`.
-  have hsplit : μ.restrict s A ≤ μ.restrict (s ∩ E) A + μ.restrict s Eᶜ := calc
-    μ.restrict s A ≤ μ.restrict (s ∩ E) A + μ.restrict (s \ E) A := by
-      conv_lhs => rw [← Set.inter_union_sdiff s E]
-      exact Measure.le_iff'.1 (Measure.restrict_union_le _ _) A
-    _ ≤ μ.restrict (s ∩ E) A + μ.restrict s Eᶜ := by
-      refine add_le_add le_rfl ?_
-      calc μ.restrict (s \ E) A
-          ≤ μ (s \ E) := (measure_mono A.subset_univ).trans_eq (by simp)
-        _ ≤ μ.restrict s Eᶜ := by
-          rw [Set.sdiff_eq, Set.inter_comm]
-          exact Measure.le_restrict_apply _ _
+  have hsplit := restrict_le_restrict_inter_add_compl μ s E A
   calc (μ s)⁻¹ * μ.restrict s A
       ≤ (μ s)⁻¹ * (μ.restrict (s ∩ E) A + μ.restrict s Eᶜ) := by gcongr
     _ ≤ (μ (s ∩ E))⁻¹ * μ.restrict (s ∩ E) A + (μ s)⁻¹ * μ.restrict s Eᶜ := by
