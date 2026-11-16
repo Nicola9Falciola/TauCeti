@@ -115,6 +115,20 @@ theorem hopfIdealInclusion_def (I : HopfIdeal R (coordinateHopfAlgebra R n)) :
         eqToHom (groupScheme_def R n).symm := by
   rw [hopfIdealInclusion]
 
+/-- The coordinate morphism recovered from a Hopf-ideal inclusion is the quotient coordinate
+map. -/
+@[simp↓]
+theorem hopfIdealInclusion_coordinateMap (I : HopfIdeal R (coordinateHopfAlgebra R n)) :
+    ((AlgebraicGeometry.hopfSpec.fullyFaithful (R := CommRingCat.of R)).preimage
+      (hopfIdealInclusion R n I ≫ eqToHom (groupScheme_def R n))).unop =
+      CommHopfAlgCat.mkQuotient (coordinateHopfAlgebra R n) I := by
+  refine Quiver.Hom.op_inj
+    ((AlgebraicGeometry.hopfSpec.fullyFaithful (R := CommRingCat.of R)).map_injective ?_)
+  rw [Quiver.Hom.op_unop,
+    (AlgebraicGeometry.hopfSpec.fullyFaithful (R := CommRingCat.of R)).map_preimage,
+    hopfIdealInclusion_def, CommHopfAlgCat.quotientSpecι_def]
+  simp
+
 /-- Every subgroup of `GL_n` cut out by a Hopf ideal is closed. -/
 instance isClosedImmersion_hopfIdealInclusion
     (I : HopfIdeal R (coordinateHopfAlgebra R n)) :
